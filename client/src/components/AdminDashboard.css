@@ -1,0 +1,128 @@
+/* AdminDashboard.css */
+
+/* Sidebar default styles (desktop) */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  background: #181f2a;
+  color: #fff;
+  height: 100vh;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  transition: transform 0.3s ease;
+  box-shadow: 2px 0 12px 0 rgba(0,0,0,0.08);
+}
+
+/* Sidebar closed (desktop) */
+.sidebar.closed {
+  display: none;
+}
+
+/* Hamburger hidden on desktop */
+.sidebar-hamburger {
+  display: none;
+}
+
+/* Main content offset for sidebar (desktop) */
+.main-content-responsive, .main-bg-blur-dark {
+  margin-left: 260px;
+  width: calc(100vw - 260px);
+  max-width: calc(100vw - 260px);
+  transition: margin-left 0.3s, width 0.3s;
+}
+/* Main content full width when sidebar is closed (desktop) */
+.sidebar.closed ~ .main-content-responsive,
+.sidebar.closed ~ .main-bg-blur-dark {
+  margin-left: 0;
+  width: 100vw;
+  max-width: 100vw;
+}
+
+/* Overlay hidden by default */
+.sidebar-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: 80vw;
+    max-width: 320px;
+    min-width: 0;
+    transform: translateX(-100%);
+    box-shadow: 2px 0 12px 0 rgba(0,0,0,0.18);
+    z-index: 200;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-hamburger {
+    display: block;
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+    z-index: 1001;
+    background: #23272f;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 10px;
+    box-shadow: none;
+    cursor: pointer;
+  }
+  .hamburger-bar {
+    display: block;
+    width: 22px;
+    height: 3px;
+    background: #fff;
+    margin: 3px 0;
+    border-radius: 2px;
+  }
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0,0,0,0.3);
+    z-index: 150;
+  }
+  .main-content-responsive, .main-bg-blur-dark {
+    margin-left: 0 !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+  .header {
+    position: relative;
+    min-height: 56px;
+    padding-left: 0 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .btn,
+  .btn-outline,
+  .btn-xs,
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .bg-error,
+  .admin-dashboard-main-grid button,
+  .admin-dashboard-cards button {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+}
+
+.blur-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.18) !important;
+  transition: backdrop-filter 0.2s;
+} 

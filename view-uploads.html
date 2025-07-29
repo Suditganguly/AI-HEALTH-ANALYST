@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Uploaded PDFs</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .file-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .file-name {
+            font-weight: bold;
+            color: #007bff;
+            font-size: 16px;
+        }
+        .file-details {
+            color: #6c757d;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+        .refresh-btn {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .refresh-btn:hover {
+            background-color: #218838;
+        }
+        .no-files {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+            padding: 40px;
+        }
+        .directory-path {
+            background: #e9ecef;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            margin-bottom: 20px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📄 Uploaded PDF Files</h1>
+        
+        <button class="refresh-btn" onclick="loadFiles()">🔄 Refresh List</button>
+        
+        <div id="directory-info" class="directory-path"></div>
+        
+        <div id="files-container">
+            <div class="no-files">Loading...</div>
+        </div>
+    </div>
+
+    <script>
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        async function loadFiles() {
+            const container = document.getElementById('files-container');
+            const directoryInfo = document.getElementById('directory-info');
+            
+            container.innerHTML = '<div class="no-files">Loading...</div>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/uploaded-files');
+                const data = await response.json();
+                
+                if (data.success) {
+                    directoryInfo.innerHTML = `📁 Upload Directory: ${data.uploadDirectory}`;
+                    
+                    if (data.files.length === 0) {
+                        container.innerHTML = `
+                            <div class="no-files">
+                                📂 No PDF files uploaded yet.<br>
+                                Upload a PDF through the app to see files here.
+                            </div>
+                        `;
+                    } else {
+                        container.innerHTML = `
+                            <h3>Found ${data.count} uploaded file(s):</h3>
+                            ${data.files.map((file, index) => `
+                                <div class="file-item">
+                                    <div class="file-name">${index + 1}. ${file.originalName}</div>
+                                    <div class="file-details">
+                                        📅 Uploaded: ${formatDate(file.uploadDate)}<br>
+                                        📏 Size: ${formatFileSize(file.size)}<br>
+                                        💾 Stored as: ${file.filename}<br>
+                                        📍 Full path: ${file.path}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        `;
+                    }
+                } else {
+                    container.innerHTML = `<div class="no-files">❌ Error: ${data.message}</div>`;
+                }
+            } catch (error) {
+                container.innerHTML = `<div class="no-files">❌ Network error: ${error.message}<br>Make sure the server is running on port 5000.</div>`;
+            }
+        }
+
+        // Load files when page loads
+        loadFiles();
+    </script>
+</body>
+</html>

@@ -1,0 +1,5 @@
+node_modules/
+build/
+firebase-debug.log
+GEMINI_API_KEY = "AIzaSyBSsm0g-0Iz94LvsqG46xibrXqYuw9lmvA"
+serviceAccountKey.json
