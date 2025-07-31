@@ -13,18 +13,44 @@ require('dotenv').config();
 const admin = require('firebase-admin');
 let db, bucket;
 let firebaseInitialized = false;
+let serviceAccount;
 
-// IMPORTANT: The server requires a serviceAccountKey.json file to connect to Firebase.
-const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+// --- Firebase Admin Initialization ---
+// Priority 1: Use environment variable if it exists (for production on Render/Vercel)
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+  try {
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    console.log('✅ Loaded Firebase service account from environment variable.');
+  } catch (e) {
+    console.error('❌ Failed to parse FIREBASE_SERVICE_ACCOUNT_JSON. Check variable format.', e.message);
+    serviceAccount = null;
+  }
+} 
+// Priority 2: Fallback to local file (for local development)
+else {
+  const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
+  if (fs.existsSync(serviceAccountPath)) {
+    try {
+      serviceAccount = require(serviceAccountPath);
+      console.log('✅ Loaded Firebase service account from local serviceAccountKey.json file.');
+    } catch (e) {
+      console.error('❌ Failed to parse local serviceAccountKey.json file.', e.message);
+      serviceAccount = null;
+    }
+  } else {
+    console.warn('⚠️ WARNING: Firebase service account not found in env vars or local file.');
+    serviceAccount = null;
+  }
+}
 
-if (fs.existsSync(serviceAccountPath)) {
+// Initialize Firebase if we have a valid service account
+if (serviceAccount) {
   // Check for the required Storage Bucket environment variable
   if (!process.env.FIREBASE_STORAGE_BUCKET) {
     console.error('❌ FIREBASE_STORAGE_BUCKET environment variable not set.');
     console.error('Firebase Storage features will be disabled. Add it to your .env file (e.g., your-project-id.appspot.com).');
   } else {
     try {
-      const serviceAccount = require(serviceAccountPath);
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount),
         storageBucket: process.env.FIREBASE_STORAGE_BUCKET
@@ -34,21 +60,16 @@ if (fs.existsSync(serviceAccountPath)) {
       firebaseInitialized = true;
       console.log('✅ Firebase Admin SDK initialized successfully (Firestore & Storage).');
     } catch (e) {
-      console.error('❌ Error initializing Firebase Admin SDK. Is your serviceAccountKey.json valid?', e.message);
+      console.error('❌ Error initializing Firebase Admin SDK.', e.message);
     }
   }
 } else {
-  console.warn('⚠️ WARNING: serviceAccountKey.json not found.');
   console.warn('Firebase features (Firestore, Storage) are disabled.');
   console.warn('API routes that rely on Firebase will return an error.');
-  console.warn('To enable Firebase, download your service account key and place it in the /server directory.');
 }
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Load environment variables from .env
-require('dotenv').config();
 
 // Warn if Llama API keys are missing
 if (!process.env.LLAMA_API_KEY || !process.env.LLAMA_API_URL) {
