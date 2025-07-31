@@ -43,7 +43,7 @@ const StructuredDataCard = ({ data }) => {
   );
 };
 
-const PDFUpload = () => {
+const PDFUpload = ({ onUploadComplete }) => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [status, setStatus] = useState('');
@@ -112,6 +112,11 @@ const PDFUpload = () => {
       if (res.ok && data.success) {
         setStatus('Processing complete! You can view the results on your Medical History page.');
         setSelectedFiles([]);
+        if (onUploadComplete) {
+          onUploadComplete();
+        }
+        // Dispatch custom event to notify other components
+        window.dispatchEvent(new CustomEvent('medicalDocumentUploaded'));
       } else {
         setError(data.message || 'Upload failed.');
       }

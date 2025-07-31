@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { FaFilePdf, FaDownload, FaTrash, FaSearch, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
-const API_URL = 'https://ai-health-analyst.onrender.com/api/medical-history';
+import React, { useEffect, useState, useContext } from 'react';
+import { FaFilePdf, FaDownload, FaTrash, FaSearch, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
+import { UserContext } from '../context/UserContext';
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);
@@ -17,6 +19,7 @@ const Toast = ({ message, type, onClose }) => (
 );
 
 const MedicalHistory = () => {
+  const { userData } = useContext(UserContext);
   const [records, setRecords] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -28,13 +31,18 @@ const MedicalHistory = () => {
   const [toast, setToast] = useState(null);
 
   const fetchRecords = async () => {
+    if (!userData || !userData.profile || !userData.profile.email) {
+      setError('User not logged in');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(API_URL);
+      const res = await fetch(`https://ai-health-analyst.onrender.com/api/documents/user/${encodeURIComponent(userData.profile.email)}`);
       const data = await res.json();
       if (data.success) {
-        setRecords(data.records);
+        setRecords(data.documents);
       } else {
         setError('Failed to fetch records');
       }
@@ -47,43 +55,48 @@ const MedicalHistory = () => {
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+
+    // Add event listener for medicalDocumentUploaded event to refresh records
+    const handleDocumentUploaded = () => {
+      fetchRecords();
+    };
+    window.addEventListener('medicalDocumentUploaded', handleDocumentUploaded);
+
+    // Cleanup listener on unmount
+    return () => {
+      window.removeEventListener('medicalDocumentUploaded', handleDocumentUploaded);
+    };
+  }, [userData]);
 
   const handleDelete = async (filename) => {
     setShowDelete(null);
     try {
-      const res = await fetch(`${API_URL}/${filename}`, { method: 'DELETE' });
-      const data = await res.json();
-      if (data.success) {
-        setRecords(records.filter(r => r.filename !== filename));
-        setToast({ message: 'Record deleted.', type: 'success' });
-      } else {
-        setToast({ message: data.message || 'Delete failed', type: 'error' });
-      }
+      // Deleting files is not implemented in backend for structured documents, so just show error
+      setToast({ message: 'Delete functionality not implemented.', type: 'error' });
     } catch {
       setToast({ message: 'Network error', type: 'error' });
     }
   };
 
   const handleDownload = (filename) => {
-    window.open(`${API_URL}/download/${filename}`, '_blank');
-    setToast({ message: 'Download started.', type: 'success' });
+    // Downloading files is not implemented in backend for structured documents, so just show error
+    setToast({ message: 'Download functionality not implemented.', type: 'error' });
   };
 
   // Filter and sort
   const filtered = records.filter(r =>
-    r.originalName.toLowerCase().includes(search.toLowerCase()) ||
+    r.originalFilename.toLowerCase().includes(search.toLowerCase()) ||
     (r.text && r.text.toLowerCase().includes(search.toLowerCase()))
   );
   const sorted = [...filtered].sort((a, b) => {
     if (sortBy === 'uploadDate') {
       return sortDir === 'desc'
-        ? new Date(b.uploadDate) - new Date(a.uploadDate)
-        : new Date(a.uploadDate) - new Date(b.uploadDate);
-    } else if (sortBy === 'originalName') {
+        ? new Date(b.createdAt?._seconds * 1000 || 0) - new Date(a.createdAt?._seconds * 1000 || 0)
+        : new Date(a.createdAt?._seconds * 1000 || 0) - new Date(b.createdAt?._seconds * 1000 || 0);
+    } else if (sortBy === 'originalFilename') {
       return sortDir === 'desc'
-        ? b.originalName.localeCompare(a.originalName)
-        : a.originalName.localeCompare(b.originalName);
+        ? b.originalFilename.localeCompare(a.originalFilename)
+        : a.originalFilename.localeCompare(b.originalFilename);
     }
     return 0;
   });
@@ -109,7 +122,7 @@ const MedicalHistory = () => {
           <label className="text-sm">Sort by:</label>
           <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="input input-dark">
             <option value="uploadDate">Date</option>
-            <option value="originalName">Filename</option>
+            <option value="originalFilename">Filename</option>
           </select>
           <button onClick={() => setSortDir(d => d === 'desc' ? 'asc' : 'desc')} className="btn btn-sm" title="Toggle sort direction">
             {sortDir === 'desc' ? <FaSortDown /> : <FaSortUp />}
@@ -125,26 +138,26 @@ const MedicalHistory = () => {
       ) : (
         <div className="space-y-6">
           {sorted.map(record => (
-            <div key={record.filename} className="card card-alt p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between shadow-lg hover:shadow-2xl transition border border-neutral-200 hover:border-primary/40 bg-white/90">
+            <div key={record.id} className="card card-alt p-4 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between shadow-lg hover:shadow-2xl transition border border-neutral-200 hover:border-primary/40 bg-white/90">
               <div className="flex-1 min-w-0">
                 <div className="flex flex-wrap gap-2 items-center mb-2">
                   <span className="font-semibold text-primary flex items-center">
-                    <FaFilePdf className="mr-1 text-red-500" /> {record.originalName}
+                    <FaFilePdf className="mr-1 text-red-500" /> {record.originalFilename}
                   </span>
                   <span className="bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded font-semibold">{(record.size/1024/1024).toFixed(2)} MB</span>
                   <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded font-medium flex items-center gap-1">
-                    <FaSort className="inline text-gray-400" /> {formatDate(record.uploadDate)}
+                    <FaSort className="inline text-gray-400" /> {formatDate(record.createdAt?._seconds * 1000)}
                   </span>
                   {record.usedOcr && <span className="bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded font-semibold">OCR</span>}
                 </div>
                 <div className="mb-2">
                   <button
                     className="text-blue-600 text-xs underline mr-2"
-                    onClick={() => setExpanded(e => ({...e, [record.filename]: !e[record.filename]}))}
+                    onClick={() => setExpanded(e => ({...e, [record.id]: !e[record.id]}))}
                   >
-                    {expanded[record.filename] ? 'Hide Text' : 'Show Extracted Text'}
+                    {expanded[record.id] ? 'Hide Text' : 'Show Extracted Text'}
                   </button>
-                  {expanded[record.filename] && (
+                  {expanded[record.id] && (
                     <div className="bg-neutral-50 border rounded p-2 mt-2 max-h-48 overflow-auto text-sm whitespace-pre-wrap">
                       {record.text || <span className="text-neutral-400">No text extracted.</span>}
                     </div>
@@ -152,22 +165,22 @@ const MedicalHistory = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-2 min-w-[120px]">
-                <button className="btn btn-primary btn-sm flex items-center justify-center gap-1" onClick={() => handleDownload(record.filename)}>
+                <button className="btn btn-primary btn-sm flex items-center justify-center gap-1" onClick={() => handleDownload(record.id)}>
                   <FaDownload /> Download
                 </button>
-                <button className="btn btn-danger btn-sm flex items-center justify-center gap-1" onClick={() => setShowDelete(record.filename)}>
+                <button className="btn btn-danger btn-sm flex items-center justify-center gap-1" onClick={() => setShowDelete(record.id)}>
                   <FaTrash /> Delete
                 </button>
               </div>
               {/* Delete Modal */}
-              {showDelete === record.filename && (
+              {showDelete === record.id && (
                 <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40">
                   <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full">
                     <h3 className="text-lg font-bold mb-2 text-red-600 flex items-center gap-2"><FaTrash /> Delete Record?</h3>
-                    <p className="mb-4 text-neutral-700">Are you sure you want to delete <span className="font-semibold">{record.originalName}</span> and its extracted text? This cannot be undone.</p>
+                    <p className="mb-4 text-neutral-700">Are you sure you want to delete <span className="font-semibold">{record.originalFilename}</span> and its extracted text? This cannot be undone.</p>
                     <div className="flex gap-2 justify-end">
                       <button className="btn btn-light" onClick={() => setShowDelete(null)}>Cancel</button>
-                      <button className="btn btn-danger" onClick={() => handleDelete(record.filename)}>Delete</button>
+                      <button className="btn btn-danger" onClick={() => handleDelete(record.id)}>Delete</button>
                     </div>
                   </div>
                 </div>
@@ -183,4 +196,4 @@ const MedicalHistory = () => {
   );
 };
 
-export default MedicalHistory; 
+export default MedicalHistory;

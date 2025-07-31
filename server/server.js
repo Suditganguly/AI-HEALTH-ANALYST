@@ -148,6 +148,87 @@ const upload = multer({
   }
 });
 
+  // Remove this block as it is invalid and causes error
+  // const filePath = file.path;
+  // let extractedText = '';
+  // let usedOcr = false;
+  // let ocrError = null;
+  // const fileType = file.mimetype;
+
+// New endpoint to upload, extract, and structure data in one go
+app.post('/api/upload-and-structure', upload.single('file'), async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'No file uploaded.' });
+  }
+
+  const filePath = req.file.path;
+
+  try {
+    // 1. Extract raw text from the uploaded file
+    const { extractedText, ocrError } = await extractTextFromFile(req.file);
+
+    if (!extractedText) {
+      return res.status(400).json({
+        success: false,
+        error: 'Could not extract text from the file.',
+        details: ocrError ? ocrError.message : 'The file might be empty or unreadable.'
+      });
+    }
+
+    // 2. Format the prompt for the Llama API as requested
+    const prompt = `You are a data-cleaning assistant. Given raw OCR-extracted text, your task is to structure it in clean JSON. Text: ${extractedText}`;
+
+    // 3. Send the extracted text to the Llama API
+    const llamaResponse = await fetch(process.env.LLAMA_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.LLAMA_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.LLAMA_MODEL_NAME || "meta-llama/llama-3-8b-instruct",
+        messages: [{ role: "user", content: prompt }],
+        temperature: 0.2, // Lower temperature for more deterministic JSON output
+        response_format: { type: "json_object" } // Request JSON output if supported
+      })
+    });
+
+    if (!llamaResponse.ok) {
+      const errorBody = await llamaResponse.text();
+      throw new Error(`Llama API request failed with status ${llamaResponse.status}: ${errorBody}`);
+    }
+
+    const llamaData = await llamaResponse.json();
+    const modelText = llamaData.choices[0].message.content;
+
+    // 4. Parse the JSON response from Llama
+    let structuredData;
+    try {
+      structuredData = JSON.parse(modelText);
+    } catch (parseError) {
+      console.error('Failed to parse Llama response as JSON:', modelText);
+      // If parsing fails, send back the raw text from the model as a fallback
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to parse the structured data from the AI model.',
+        rawResponse: modelText
+      });
+    }
+
+    // 5. Send the structured data back to the frontend
+    res.json({ success: true, structuredData });
+
+  } catch (error) {
+    console.error('Error in /api/upload-and-structure:', error);
+    res.status(500).json({ success: false, error: 'An internal server error occurred.', details: error.message });
+  } finally {
+    // 6. Clean up the uploaded file to save space
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+});
+
 // Routes
 app.get('/', (req, res) => {
   res.json({ message: 'AIBOT Server is running!' });
