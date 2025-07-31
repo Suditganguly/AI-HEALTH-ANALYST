@@ -50,7 +50,7 @@ if (!process.env.LLAMA_API_KEY || !process.env.LLAMA_API_URL) {
 // --- Dynamic CORS Configuration ---
 // In your Render service, set an environment variable:
 // KEY:   FRONTEND_URL
-// VALUE: https://ai-health-analyst.vercel.app (Your Vercel URL)
+// VALUE: https://ai-health-analyst.vercel.app/ (Your Vercel URL)
 
 const allowedOrigins = [
   process.env.FRONTEND_URL, // Your deployed Vercel URL from environment variables

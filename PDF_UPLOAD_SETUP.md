@@ -68,7 +68,7 @@ From the `client` directory:
 npm run dev
 ```
 
-The React app will start on `https://ai-health-analyst.vercel.app` (Vite default)
+The React app will start on `https://ai-health-analyst.vercel.app/` (Vite default)
 
 ## 🔧 How It Works
 

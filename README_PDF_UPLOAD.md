@@ -35,7 +35,7 @@ Server runs on: `https://ai-health-analyst.onrender.com`
 cd client
 npm run dev
 ```
-Frontend runs on: `https://ai-health-analyst.vercel.app`
+Frontend runs on: `https://ai-health-analyst.vercel.app/`
 
 ### 3. Test the Feature
 1. Go to Profile Settings → Medical Info tab
