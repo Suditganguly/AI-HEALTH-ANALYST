@@ -11,27 +11,36 @@ require('dotenv').config();
 
 // Firebase Admin SDK
 const admin = require('firebase-admin');
-let db;
+let db, bucket;
 let firebaseInitialized = false;
 
 // IMPORTANT: The server requires a serviceAccountKey.json file to connect to Firebase.
 const serviceAccountPath = path.join(__dirname, 'serviceAccountKey.json');
 
 if (fs.existsSync(serviceAccountPath)) {
-  try {
-    const serviceAccount = require(serviceAccountPath);
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
-    });
-    db = admin.firestore();
-    firebaseInitialized = true;
-    console.log('✅ Firebase Admin SDK initialized successfully.');
-  } catch (e) {
-    console.error('❌ Error initializing Firebase Admin SDK. Is your serviceAccountKey.json valid?', e.message);
+  // Check for the required Storage Bucket environment variable
+  if (!process.env.FIREBASE_STORAGE_BUCKET) {
+    console.error('❌ FIREBASE_STORAGE_BUCKET environment variable not set.');
+    console.error('Firebase Storage features will be disabled. Add it to your .env file (e.g., your-project-id.appspot.com).');
+  } else {
+    try {
+      const serviceAccount = require(serviceAccountPath);
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: process.env.FIREBASE_STORAGE_BUCKET
+      });
+      db = admin.firestore();
+      bucket = admin.storage().bucket(); // Get a reference to the default storage bucket
+      firebaseInitialized = true;
+      console.log('✅ Firebase Admin SDK initialized successfully (Firestore & Storage).');
+    } catch (e) {
+      console.error('❌ Error initializing Firebase Admin SDK. Is your serviceAccountKey.json valid?', e.message);
+    }
   }
 } else {
   console.warn('⚠️ WARNING: serviceAccountKey.json not found.');
-  console.warn('Firebase features are disabled. API routes that rely on Firestore will return an error.');
+  console.warn('Firebase features (Firestore, Storage) are disabled.');
+  console.warn('API routes that rely on Firebase will return an error.');
   console.warn('To enable Firebase, download your service account key and place it in the /server directory.');
 }
 
@@ -47,26 +56,28 @@ if (!process.env.LLAMA_API_KEY || !process.env.LLAMA_API_URL) {
   console.warn('Note: This implementation assumes an OpenAI-compatible API for Llama (e.g., from Groq, Together.ai, etc.).');
 }
 
-// --- Dynamic CORS Configuration ---
-// In your Render service, set an environment variable:
-// KEY:   FRONTEND_URL
-// VALUE: https://ai-health-analyst.vercel.app/ (Your Vercel URL)
+// --- CORS Configuration ---
+// This setup allows requests from your deployed Vercel frontend and local development servers.
 
 const allowedOrigins = [
-  process.env.FRONTEND_URL, // Your deployed Vercel URL from environment variables
+  'https://ai-health-analyst.vercel.app', // Your Vercel frontend URL (no trailing slash)
   'http://localhost:3000',
   'http://localhost:5173', // Vite default dev port
   'http://localhost:4173'  // Vite preview port
-].filter(Boolean); // Filters out undefined values if FRONTEND_URL is not set
+];
 
-console.log('✅ Allowed CORS origins:', allowedOrigins);
+// For extra flexibility, you can still use an environment variable for other origins.
+if (process.env.FRONTEND_URL) {
+  allowedOrigins.push(process.env.FRONTEND_URL);
+}
 
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow requests with no origin (like Postman, mobile apps) and from whitelisted origins
+    // Allow requests if the origin is in our list or if there's no origin (like for Postman or server-to-server).
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error(`CORS error: The origin '${origin}' was blocked.`);
       callback(new Error('Not allowed by CORS'));
     }
   },

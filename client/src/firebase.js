@@ -1,15 +1,16 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
+ 
+// Use environment variables for Firebase config (prefixed with VITE_ for Vite projects)
 const firebaseConfig = {
-    apiKey: "AIzaSyAUjsIKr-Hi8_IRFjXE6i8VZ6-okUmLGGE",
-    authDomain: "healthai-3046.firebaseapp.com",
-    projectId: "healthai-3046",
-    storageBucket: "healthai-3046.firebasestorage.app",
-    messagingSenderId: "55110825429",
-    appId: "1:55110825429:web:cb0aea97dcbfaf42cdb95c",
-    measurementId: "G-7DXMNNL5JW"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
   };
 
 const app = initializeApp(firebaseConfig);
