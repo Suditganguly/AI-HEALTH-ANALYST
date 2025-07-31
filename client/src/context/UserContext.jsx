@@ -755,8 +755,8 @@ export const UserProvider = ({ children }) => {
 
     // Access environment variables using import.meta.env for Vite-based projects.
     // This prevents the "process is not defined" error in the browser.
-    // Ensure your .env file has VITE_API_URL=http://localhost:5000
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    // Ensure your .env file has VITE_API_URL=https://ai-health-analyst.onrender.com
+    const API_URL = import.meta.env.VITE_API_URL || 'https://ai-health-analyst.onrender.com';
 
     try {
       const response = await fetch(`${API_URL}/api/documents/user/${encodeURIComponent(email)}`);

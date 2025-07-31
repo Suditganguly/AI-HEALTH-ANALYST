@@ -47,11 +47,32 @@ if (!process.env.LLAMA_API_KEY || !process.env.LLAMA_API_URL) {
   console.warn('Note: This implementation assumes an OpenAI-compatible API for Llama (e.g., from Groq, Together.ai, etc.).');
 }
 
-// CORS configuration
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://localhost:3000'], // Vite default port and common React ports
-  credentials: true
-}));
+// --- Dynamic CORS Configuration ---
+// In your Render service, set an environment variable:
+// KEY:   FRONTEND_URL
+// VALUE: https://ai-health-analyst.vercel.app (Your Vercel URL)
+
+const allowedOrigins = [
+  process.env.FRONTEND_URL, // Your deployed Vercel URL from environment variables
+  'http://localhost:3000',
+  'http://localhost:5173', // Vite default dev port
+  'http://localhost:4173'  // Vite preview port
+].filter(Boolean); // Filters out undefined values if FRONTEND_URL is not set
+
+console.log('✅ Allowed CORS origins:', allowedOrigins);
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like Postman, mobile apps) and from whitelisted origins
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true, // This is important for sending cookies or auth headers
+};
+app.use(cors(corsOptions));
 
 // Body parser middleware
 app.use(express.json());

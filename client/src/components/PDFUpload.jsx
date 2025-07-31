@@ -1,8 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { FaFilePdf, FaFileImage, FaUpload, FaTimes, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 import { useUser } from '../context/UserContext';
-
-const API_URL = 'http://localhost:5000/api/process-document';
+import { API_ENDPOINTS } from '../config/api';
 
 const isImage = (file) => file.type.startsWith('image/');
 const isPDF = (file) => file.type === 'application/pdf';
@@ -105,7 +104,7 @@ const PDFUpload = () => {
     selectedFiles.forEach(f => formData.append('files', f));
     formData.append('userEmail', userData.profile.email);
     try {
-      const res = await fetch(API_URL, {
+      const res = await fetch(API_ENDPOINTS.PROCESS_DOCUMENT, {
         method: 'POST',
         body: formData
       });

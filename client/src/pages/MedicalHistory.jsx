@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { FaFilePdf, FaDownload, FaTrash, FaSearch, FaSort, FaSortUp, FaSortDown } from 'react-icons/fa';
 
-const API_URL = 'http://localhost:5000/api/medical-history';
+const API_URL = 'https://ai-health-analyst.onrender.com/api/medical-history';
 
 function formatDate(dateStr) {
   const d = new Date(dateStr);

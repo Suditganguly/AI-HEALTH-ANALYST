@@ -58,7 +58,7 @@ npm run dev
 npm start
 ```
 
-The server will start on `http://localhost:5000`
+The server will start on `https://ai-health-analyst.onrender.com`
 
 ### 4. Start the Frontend
 
@@ -68,7 +68,7 @@ From the `client` directory:
 npm run dev
 ```
 
-The React app will start on `http://localhost:5173` (Vite default)
+The React app will start on `https://ai-health-analyst.vercel.app` (Vite default)
 
 ## 🔧 How It Works
 
