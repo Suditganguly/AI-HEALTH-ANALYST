@@ -4,7 +4,7 @@ import { FaEnvelope, FaLock } from 'react-icons/fa';
 import { useUser } from '../context/UserContext';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
-import './Login.css';
+
 
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
