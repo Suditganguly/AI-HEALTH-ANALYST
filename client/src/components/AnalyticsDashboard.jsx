@@ -17,7 +17,7 @@ ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, T
 const AnalyticsDashboard = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('week');
   const [selectedMetric, setSelectedMetric] = useState('all');
-  const [quickLog, setQuickLog] = useState({ steps: '', water: '', sleep: '', exercise: '', mood: '', medication: '' });
+  const [quickLog, setQuickLog] = useState({ steps: '', water: '', sleep: '', exercise: '', mood: '', medication: '', weight: '' });
   const {
     userData = {},
     addActivityLogEntry,
@@ -65,6 +65,7 @@ const AnalyticsDashboard = () => {
     // If no entries, provide fallback values
     return values.length > 0 ? values : 
       (type === 'mood' ? (userData.userAnalytics?.mood?.history || [7, 8, 8, 8, 8, 9, 9]) : 
+       type === 'weight' ? [userData.userAnalytics?.vitals?.weight?.current || 70] :
        Array(n).fill(0));
   };
 
@@ -80,7 +81,7 @@ const AnalyticsDashboard = () => {
     (userData.userAnalytics?.medications?.adherence || 92);
 
   // Weight trend (last 7 days)
-  const weightHistory = (userData.vitals || []).filter(v => v.name === 'weight').slice(-7).map(v => Number(v.value));
+  const weightHistory = lastNActivity('weight', 7);
   const weightTarget = userData.profile?.healthGoals?.targetWeight || userData.userAnalytics?.vitals?.weight?.target || '';
   const weightCurrent = weightHistory.length ? weightHistory[weightHistory.length - 1] : 
     (userData.userAnalytics?.vitals?.weight?.current || 70);
@@ -107,6 +108,10 @@ const AnalyticsDashboard = () => {
       // Add a new medication reminder (or mark as taken)
       // For demo: add a reminder (replace with real medication logging logic)
       addReminder({ name: 'Medication', time: new Date().toLocaleTimeString(), notes: '', frequency: 'Once', taken: true });
+    }
+    if (field === 'weight') {
+      // Add weight to vitals
+      addActivityLogEntry({ type: 'weight', value: value, date: new Date().toISOString() });
     }
     setQuickLog(prev => ({ ...prev, [field]: '' }));
   };
@@ -193,6 +198,13 @@ const AnalyticsDashboard = () => {
         const base = userData.userAnalytics?.mood?.average || 8.2;
         const variation = Math.sin(idx * 0.7) * 1.5; // Sinusoidal variation
         return Math.max(1, Math.min(10, Math.round((base + variation + (Math.random() * 1 - 0.5)) * 10) / 10));
+      });
+    } else if (type === 'weight') {
+      // Generate weight data with some variation
+      return labels.map((_, idx) => {
+        const base = userData.userAnalytics?.vitals?.weight?.current || 70;
+        const variation = Math.sin(idx * 0.5) * 2; // Sinusoidal variation
+        return Math.max(0, Math.round((base + variation + (Math.random() * 2 - 1)) * 10) / 10);
       });
     } else if (type === 'medication') {
       // Generate medication adherence data (0 or 1 for taken/not taken)
@@ -419,6 +431,23 @@ const AnalyticsDashboard = () => {
                 Current: {weightCurrent}kg
               </span>
             </div>
+            <div className="mt-4 flex gap-2 justify-center">
+              <input 
+                type="number" 
+                min="0" 
+                step="0.1" 
+                value={quickLog.weight || ''} 
+                onChange={e => handleQuickLogChange('weight', e.target.value)} 
+                placeholder="Current weight (kg)" 
+                className="input input-dark w-32" 
+              />
+              <button 
+                className="btn btn-primary" 
+                onClick={() => handleQuickLogSubmit('weight')}
+              >
+                Update
+              </button>
+            </div>
           </div>
 
           {/* Mood Tracking */}
@@ -447,6 +476,23 @@ const AnalyticsDashboard = () => {
                 Trend: {userData.mood?.trend ?? userData.userAnalytics?.mood?.trend ?? 'stable'}
               </span>
             </div>
+            <div className="mt-4 flex gap-2 justify-center">
+              <input 
+                type="number" 
+                min="1" 
+                max="10" 
+                value={quickLog.mood} 
+                onChange={e => handleQuickLogChange('mood', e.target.value)} 
+                placeholder="Mood (1-10)" 
+                className="input input-dark w-20" 
+              />
+              <button 
+                className="btn btn-primary" 
+                onClick={() => handleQuickLogSubmit('mood')}
+              >
+                Log Mood
+              </button>
+            </div>
           </div>
         </div>
 
@@ -458,8 +504,9 @@ const AnalyticsDashboard = () => {
               <div className="text-3xl mb-2">🚶‍♂️</div>
               <div className="text-2xl font-bold text-primary">{sumActivity('steps')}</div>
               <div className="text-sm text-neutral-600">Total Steps</div>
-              <div className="flex gap-2 mt-2">
-                <input type="number" min="0" value={quickLog.steps} onChange={e => handleQuickLogChange('steps', e.target.value)} placeholder="Log steps" className="input input-dark w-20" />
+              <div className="text-sm text-neutral-600 mt-1">Avg: {avgActivity('steps')} steps/day</div>
+              <div className="flex gap-2 mt-2 justify-center">
+                <input type="number" min="0" value={quickLog.steps} onChange={e => handleQuickLogChange('steps', e.target.value)} placeholder="Steps" className="input input-dark w-20" />
                 <button className="btn btn-primary" onClick={() => handleQuickLogSubmit('steps')}>Add</button>
               </div>
             </div>
@@ -467,8 +514,9 @@ const AnalyticsDashboard = () => {
               <div className="text-3xl mb-2">💪</div>
               <div className="text-2xl font-bold text-primary">{sumActivity('exercise')}</div>
               <div className="text-sm text-neutral-600">Exercise Minutes</div>
-              <div className="flex gap-2 mt-2">
-                <input type="number" min="0" value={quickLog.exercise} onChange={e => handleQuickLogChange('exercise', e.target.value)} placeholder="Log min" className="input input-dark w-20" />
+              <div className="text-sm text-neutral-600 mt-1">Avg: {(sumActivity('exercise') / 7).toFixed(1)} min/day</div>
+              <div className="flex gap-2 mt-2 justify-center">
+                <input type="number" min="0" value={quickLog.exercise} onChange={e => handleQuickLogChange('exercise', e.target.value)} placeholder="Minutes" className="input input-dark w-20" />
                 <button className="btn btn-primary" onClick={() => handleQuickLogSubmit('exercise')}>Add</button>
               </div>
             </div>
@@ -476,8 +524,9 @@ const AnalyticsDashboard = () => {
               <div className="text-3xl mb-2">💧</div>
               <div className="text-2xl font-bold text-primary">{sumActivity('water')}</div>
               <div className="text-sm text-neutral-600">Glasses of Water</div>
-              <div className="flex gap-2 mt-2">
-                <input type="number" min="0" value={quickLog.water} onChange={e => handleQuickLogChange('water', e.target.value)} placeholder="Log glass" className="input input-dark w-20" />
+              <div className="text-sm text-neutral-600 mt-1">Avg: {avgActivity('water')} glasses/day</div>
+              <div className="flex gap-2 mt-2 justify-center">
+                <input type="number" min="0" value={quickLog.water} onChange={e => handleQuickLogChange('water', e.target.value)} placeholder="Glasses" className="input input-dark w-20" />
                 <button className="btn btn-primary" onClick={() => handleQuickLogSubmit('water')}>Add</button>
               </div>
             </div>
@@ -485,8 +534,9 @@ const AnalyticsDashboard = () => {
               <div className="text-3xl mb-2">😴</div>
               <div className="text-2xl font-bold text-primary">{avgActivity('sleep', 7).toFixed(1)}</div>
               <div className="text-sm text-neutral-600">Hours of Sleep</div>
-              <div className="flex gap-2 mt-2">
-                <input type="number" min="0" value={quickLog.sleep} onChange={e => handleQuickLogChange('sleep', e.target.value)} placeholder="Log hr" className="input input-dark w-20" />
+              <div className="text-sm text-neutral-600 mt-1">Total: {sumActivity('sleep').toFixed(1)} hours</div>
+              <div className="flex gap-2 mt-2 justify-center">
+                <input type="number" min="0" step="0.1" value={quickLog.sleep} onChange={e => handleQuickLogChange('sleep', e.target.value)} placeholder="Hours" className="input input-dark w-20" />
                 <button className="btn btn-primary" onClick={() => handleQuickLogSubmit('sleep')}>Add</button>
               </div>
             </div>
