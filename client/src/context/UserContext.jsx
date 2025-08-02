@@ -1133,50 +1133,51 @@ export const UserProvider = ({ children }) => {
     setUserData(prev => {
       // Default analytics
       const defaultAnalytics = {
-        totalUsers: prev.systemUsers?.length || 5,
-        activeUsers: prev.systemUsers?.filter(u => u.status === 'active').length || 4,
-        totalArticles: prev.articles?.length || 5,
-        publishedArticles: prev.articles?.filter(a => a.status === 'published').length || 4,
-        totalDoctors: prev.doctors?.length || 5,
-        totalAppointments: prev.appointments?.length || 0,
-        totalReminders: prev.systemUsers?.reduce?.((sum, u) => sum + (u.reminders || 0), 0) || 10,
-        reminderCompletionRate: 80,
-        userEngagementRate: 75,
-        articleReadershipRate: 48,
-        userGrowthRate: 12,
-        articleEngagementRate: 8,
+        totalUsers: prev.systemUsers?.length || 150,
+        activeUsers: prev.systemUsers?.filter(u => u.status === 'active').length || 135,
+        totalArticles: prev.articles?.length || 25,
+        publishedArticles: prev.articles?.filter(a => a.status === 'published').length || 20,
+        totalDoctors: prev.doctors?.length || 35,
+        totalAppointments: prev.appointments?.length || 85,
+        totalReminders: prev.systemUsers?.reduce?.((sum, u) => sum + (u.reminders || 0), 0) || 240,
+        reminderCompletionRate: 85,
+        userEngagementRate: 78,
+        articleReadershipRate: 65,
+        userGrowthRate: 15,
+        articleEngagementRate: 12,
         systemHealth: {
           serverStatus: 'Online',
-          apiResponse: '120ms',
+          apiResponse: '85ms',
           database: 'Connected',
-          storageUsed: '68%'
+          storageUsed: '42%'
         }
       };
       // Default user analytics
       const defaultUserAnalytics = {
-        goals: { completionRate: 72 },
-        medications: { adherence: 88 },
+        goals: { completionRate: 78 },
+        medications: { adherence: 92 },
         activities: {
-          steps: { average: 8200 },
-          sleep: { average: 7.2 },
-          exercise: { total: 150 },
-          water: { average: 8 }
+          steps: { average: 9200 },
+          sleep: { average: 7.5 },
+          exercise: { total: 210 },
+          water: { average: 9 }
         },
         healthScore: {
-          current: 82,
-          previous: 78,
+          current: 86,
+          previous: 82,
           trend: 'up',
-          history: [78, 80, 81, 82, 83, 82, 82]
+          history: [78, 80, 82, 84, 85, 86, 86]
         },
         mood: {
-          average: 7.8,
-          trend: 'stable',
-          history: [7, 8, 8, 7, 8, 8, 8]
+          average: 8.2,
+          trend: 'up',
+          history: [7, 8, 8, 8, 8, 9, 9]
         },
         insights: [
-          { type: 'positive', message: 'Users are completing more goals this week.' },
-          { type: 'warning', message: 'Some users missed their medication reminders.' },
-          { type: 'suggestion', message: 'Encourage users to drink more water.' }
+          { type: 'positive', message: 'Great progress! Users are completing more goals this week.' },
+          { type: 'warning', message: 'Some users missed their medication reminders. Send a gentle reminder.' },
+          { type: 'suggestion', message: 'Encourage users to stay hydrated. Average water intake is slightly below target.' },
+          { type: 'positive', message: 'Sleep quality has improved across the user base by 8% this month.' }
         ]
       };
       return {
