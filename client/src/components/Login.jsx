@@ -5,7 +5,6 @@ import { useUser } from '../context/UserContext';
 import { auth } from '../firebase';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 
-
 const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -62,9 +61,29 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
+    <div className="auth-page login-container">
+      <div className="auth-bg-blur"></div>
       <div className="auth-card">
+        <div style={{ marginBottom: '1rem', textAlign: 'left' }}>
+          <Link
+            to="/"
+            style={{
+              color: '#2563eb',
+              textDecoration: 'none',
+              fontWeight: 500,
+              fontSize: '1rem',
+              display: 'inline-block',
+              transition: 'text-decoration 0.2s',
+            }}
+            className="back-to-home-link"
+          >
+            <span style={{ fontSize: '1.1em', marginRight: '0.4em', verticalAlign: 'middle' }}>←</span> Back to Home
+          </Link>
+        </div>
         <div className="text-center mb-8">
+          <div className="mx-auto h-14 w-14 flex items-center justify-center rounded-full bg-primary shadow-neumorph text-white text-3xl font-bold mb-4 backdrop-blur-md">
+            <span role="img" aria-label="login">🔑</span>
+          </div>
           <h2>Sign in to <span className="text-primary">Smart Health</span></h2>
           <p className="mt-2">
             Or{' '}
@@ -76,12 +95,13 @@ const Login = () => {
             </Link>
           </p>
         </div>
-        <form onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           {errors.general && (
             <div className="alert alert-error animate-shake">{errors.general}</div>
           )}
-          <div className="input-group">
+          <div className="relative">
             <label htmlFor="email">Email address</label>
+            <span className="absolute left-3 top-9 text-neutral-400"><FaEnvelope /></span>
             <input
               id="email"
               name="email"
@@ -89,15 +109,18 @@ const Login = () => {
               autoComplete="email"
               value={formData.email}
               onChange={handleChange}
-              className="input-field"
+              className={`input input-dark w-full pl-10 ${errors.email ? 'border-error ring-error' : ''}`}
               placeholder="Enter your email"
+              aria-invalid={!!errors.email}
+              aria-describedby="email-error"
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-error font-semibold animate-shake">{errors.email}</p>
+              <p id="email-error" className="mt-1 text-sm text-error font-semibold animate-shake">{errors.email}</p>
             )}
           </div>
-          <div className="input-group">
+          <div className="relative">
             <label htmlFor="password">Password</label>
+            <span className="absolute left-3 top-9 text-neutral-400"><FaLock /></span>
             <input
               id="password"
               name="password"
@@ -105,11 +128,13 @@ const Login = () => {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange}
-              className="input-field"
+              className={`input input-dark w-full pl-10 ${errors.password ? 'border-error ring-error' : ''}`}
               placeholder="Enter your password"
+              aria-invalid={!!errors.password}
+              aria-describedby="password-error"
             />
             {errors.password && (
-              <p className="mt-1 text-sm text-error font-semibold animate-shake">{errors.password}</p>
+              <p id="password-error" className="mt-1 text-sm text-error font-semibold animate-shake">{errors.password}</p>
             )}
           </div>
           <div className="flex items-center justify-between mb-6">
@@ -118,6 +143,7 @@ const Login = () => {
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
+                className="h-4 w-4 text-primary focus:ring-primary border-neutral-300 rounded shadow-neumorph-sm"
               />
               <label htmlFor="remember-me" className="ml-2">Remember me</label>
             </div>
@@ -128,9 +154,17 @@ const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="btn-primary"
+            className="btn btn-primary w-full"
+            style={{ minHeight: 48 }}
           >
-            {isLoading ? 'Signing in...' : 'Sign in'}
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Signing in...
+              </div>
+            ) : (
+              'Sign in'
+            )}
           </button>
         </form>
       </div>
